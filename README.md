@@ -1,2 +1,2 @@
 # Kinect_SLAM
-just for a Tutorial, based on the opengl ,QT5,ROS, and this V-SLAM's main frame  reference the ORB-SLAM, I use its LoopClosing,Optimization and So on ,i also add some noisy model of kinect v1 to this project.
+i write the project just for a Tutorial and learning other scholars' algothrim, based on the opengl ,QT5,ROS, and this V-SLAM's main algorithm reference the ORB-SLAM, I use its LoopClosing,Optimization and So on ,in addition,i add some noisy model of kinect v1 to this project,Such as EMM. i also add a function to compute the mahalanobis distance between the coordinate of the same MapPoints in two different frame, to  judge the motion between two keyframe,those method first are adopt in the RGBD-SLAMV2 
