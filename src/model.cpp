@@ -19,7 +19,7 @@ typedef union
 #define LN_SQRT_2_PI 0.9189385332
 
 //get camera intrinsics
-static void getIntrinsics(float& fx, float& fy, float& cx, float& cy, const sensor_msgs::CameraInfo& cam_info)
+ void getIntrinsics(float& fx, float& fy, float& cx, float& cy, const sensor_msgs::CameraInfo& cam_info)
 {
     ParameterSetting* ps=ParameterSetting::instance();
     fx = ps->get<double>("camera_fx") == 0 ? cam_info.K[0]:ps->get<double>("camera_fx");
@@ -27,7 +27,7 @@ static void getIntrinsics(float& fx, float& fy, float& cx, float& cy, const sens
     cx = ps->get<double>("camera_cx") == 0 ? cam_info.K[2]:ps->get<double>("camera_cx");
     cy = ps->get<double>("camera_cy") == 0 ? cam_info.K[5]:ps->get<double>("camera_cy");
 }
-static void getDistortions(float& k1, float& k2, float& k3, float& p1, float& p3, const sensor_msgs::CameraInfo& cam_info)
+ void getDistortions(float& k1, float& k2, float& k3, float& p1, float& p2, const sensor_msgs::CameraInfo& cam_info)
 {
     k1 = cam_info.D[0];
     k2 = cam_info.D[1];
@@ -44,21 +44,7 @@ static void getForcalLengthInv(float& fxinv, float& fyinv, float& cx, float& cy,
     fxinv = 1. / fxinv;
     fyinv = 1. / fyinv;
 }
-//point in world frame
-geometry_msgs::Point pointInWorldFrame(const Eigen::Vector4f& point3d, const g2o::VertexSE3::EstimateType& transf)
-{
-    Eigen::Vector3d tmp(point3d[0], point3d[1], point3d[2]);
 
-    tmp = transf * tmp; // transform the point in worldframe
-
-    geometry_msgs::Point p;
-
-    p.x = tmp.x();
-    p.y = tmp.y();
-    p.z = tmp.z();
-
-    return p;
-}
 void transfSize(const Eigen::Isometry3d& t,double& angle, double& dist)
 {
     angle = acos( (t.rotation().trace()-1) / 2) * 180 /M_PI;
@@ -66,51 +52,6 @@ void transfSize(const Eigen::Isometry3d& t,double& angle, double& dist)
     ROS_INFO("Rotation: %4.2f , Distance: % 4.3fm",angle,dist);
 }
 
-bool isBigTrafo(const Eigen::Isometry3d& t)
-{
-  double angle, dist;
-  transfSize(t, angle, dist);
-  return (dist>ParameterSetting::instance()->get<double>("min_translation_meter")||
-          angle>ParameterSetting::instance()->get<double>("min_rotation_degree"));
-}
-bool isBigTrafo(const g2o::SE3Quat& t)
-{
-    float angle = 2.0 * acos(t.rotation().w()) *180 / M_PI;
-    float dist = t.translation().norm();
-    QString infostring;
-    ROS_INFO("Rotation: %4.2f , Distance: % 4.3fm",angle,dist);
-    infostring.sprintf("Rotation: %4.2f , Distance: % 4.3fm",angle,dist);
-    return (dist>ParameterSetting::instance()->get<double>("min_translation_meter")||
-            angle>ParameterSetting::instance()->get<double>("min_rotation_degree"));
-
-}
-
-bool isSmallTrafo(const g2o::SE3Quat& t, double seconds )
-{
-    if( seconds <= 0.0) {
-        ROS_WARN("Time delta invalid: %f. Skipping test for small transformation", seconds);
-        return true;
-    }
-    float angle = 2.0 * acos(t.rotation().w()) *180 / M_PI;
-    float dist = t.translation().norm();
-    QString infostring;
-    ROS_INFO("Rotation: %4.2f , Distance: % 4.3fm",angle,dist);
-    infostring.sprintf("Rotation: %4.2f , Distance: % 4.3fm",angle,dist);
-    return (dist/ seconds < ParameterSetting::instance()->get<double>("max_translation_meter") &&
-            angle / seconds < ParameterSetting::instance()->get<double>("max_rotation_degree"));
-}
-bool isSmallTrafo(const Eigen::Isometry3d& t, double seconds)
-{
-    if( seconds <= 0.0) {
-        ROS_WARN("Time delta invalid: %f. Skipping test for small transformation", seconds);
-        return true;
-    }
-    double angle, dist;
-    transfSize(t, angle, dist);
-
-    return (dist/ seconds < ParameterSetting::instance()->get<double>("max_translation_meter") &&
-            angle / seconds < ParameterSetting::instance()->get<double>("max_rotation_degree"));
-}
 pointcloud_type* createXYZRGBPointCloud (const cv::Mat& depth_msg, const cv::Mat& rgb_msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
 {
     ScopedTimer s(__FUNCTION__);

@@ -88,6 +88,7 @@ g2o::SE3Quat  tf2G2o( const tf::Transform t)
   g2o::SE3Quat res(quat,trans);
   return res;
 }
+
 g2o::SE3Quat eigen2G2o( const Eigen::Matrix4d& eigen_mat)
 {
     Eigen::Isometry3d transf(eigen_mat);
@@ -98,10 +99,107 @@ g2o::SE3Quat eigen2G2o( const Eigen::Matrix4d& eigen_mat)
 
     return res;
 }
+
+g2o::SE3Quat Mat2G2o(const cv::Mat &t)
+{
+  Eigen::Matrix<double,3,3> R;
+  R << t.at<float>(0,0), t.at<float>(0,1), t.at<float>(0,2),
+       t.at<float>(1,0), t.at<float>(1,1), t.at<float>(1,2),
+       t.at<float>(2,0), t.at<float>(2,1), t.at<float>(2,2);
+
+  Eigen::Matrix<double,3,1> t(t.at<float>(0,3), t.at<float>(1,3), t.at<float>(2,3));
+  return g2o::SE3Quat(R,t);
+}
+
+cv::Mat G2o2Mat(const g2o::SE3Quat& quat)
+{
+    Eigen::Matrix<double,4,4> eigMat = quat.to_homogeneous_matrix();
+    return Eigen2Mat(eigMat);
+}
+
+cv::Mat G2o2Mat(const g2o::Sim3& sim)
+{
+    Eigen::Matrix3d R = sim.rotation().toRotationMatrix();
+    Eigen::Vector3d t = sim.translation();
+    double s=sim.scale();
+
+    return Eigen2MatSE3(s*R,t);
+}
+
+Eigen::Matrix<double,3,3> Mat2Eigen(const cv::Mat& cvMat3)
+{
+    Eigen::Matrix<double,3,3> M;
+    M<< cvMat3.at<float>(0,0),cvMat3.at<float>(0,1),cvMat.at<float>(0,2),
+        cvMat3.at<float>(1,0),cvMat3.at<float>(1,1),cvMat.at<float>(1,2),
+        cvMat3.at<float>(2,0),cvMat3.at<float>(2,1),cvMat.at<float>(2,2);
+
+   return M;
+}
+
+Eigen::Matrix<double,3,1> toVector3d(const cv::Mat& cvVector)
+{
+ Eigen::Matrix<double,3,1> vector;
+ vector << cvVector.at<float>(0), cvVector.at<float>(1), cvVector.at<float>(2);
+ return vector;
+}
+
+Eigen::Matrix<double,3,1> toVector3d(const cv::Point3f& cvPoint)
+{
+    Eigen::Matrix<double,3,1> vector;
+    vector << cvPoint.x, cvPoint.y, cvPoint.z;
+    return vector;
+}
+
+cv::Mat Eigen2Mat(const Eigen<double,4,4>& m)
+{
+    cv::Mat cvMat(4,4,CV_32F);
+    for(int i=0;i<4;i++)
+        for(int j=0;j<4;j++)
+            cvMat.at<float>(i,j)=m(i,j);
+
+    return cvMat.clone();
+}
+
+cv::Mat Eigen2Mat(const Eigen::Matrix3d& m)
+{
+    cv::Mat mat(3,3,CV_32F);
+    for(int i=0;i<3;i++)
+        for(int j=0;j<3;j++)
+        mat.at<float>(i,j) = m(i,j);
+
+    return mat.clone();
+}
+
+cv::Mat Eigen2Mat(const Eigen::Matrix<double,3,1>& m)
+{
+    cv::Mat mat(3,1,CV_32F);
+    for(int i=0;i<3;i++)
+        mat.at<float>(i) = m(i);
+}
+
+cv::Mat Eigen2MatSE3(const Eigen::Matrix<double,3,1>& R, const Eigen::Matrix<double,3,1>& t)
+{
+    cv::Mat mat = cv::Mat::eye(4,4,CV_32F);
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            mat.at<float>(i,j) = R(i,j);
+        }
+
+    }
+    for(int i=0;i<3;i++)
+    {
+        mat.at<float>(i,3) = t(i);
+    }
+    return mat.clone();
+}
+
 void printMatrixInfo(const cv::Mat& image, std::string name)
 {
    ROS_INFO_STREAM("T theMatrix " << name << " - Type:" << openCVCode2String(image.type()) <<  " rows: " <<  image.rows  <<  " cols: " <<  image.cols);
 }
+
 //code = image.type();
 std::string openCVCode2String(unsigned int code)
 {
@@ -159,7 +257,7 @@ bool asyncFrameDrop(ros::Time depth, ros::Time rgb)
     return false;
 }
 
-std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
+std::vector<cv::Mat> toDescriptorVector(const cv::Mat &Descriptors)
 {
     std::vector<cv::Mat> vDesc;
     vDesc.reserve(Descriptors.rows);

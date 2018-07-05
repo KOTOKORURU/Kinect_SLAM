@@ -27,7 +27,7 @@
 
 using namespace std;
 
-namespace ORB_SLAM2
+namespace KINECT_SLAM
 {
 
 KeyFrameDatabase::KeyFrameDatabase (const ORBVocabulary &voc):
@@ -42,7 +42,7 @@ KeyFrameDatabase::KeyFrameDatabase (const ORBVocabulary &voc):
  */
 void KeyFrameDatabase::add(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutex);
+    QMutexLocker lock(&mMutex);
 
     // 为每一个word添加该KeyFrame
     for(DBoW2::BowVector::const_iterator vit= pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit!=vend; vit++)
@@ -55,7 +55,7 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
  */
 void KeyFrameDatabase::erase(KeyFrame* pKF)
 {
-    unique_lock<mutex> lock(mMutex);
+    QMutexLocker lock(&mMutex);
 
     // Erase elements in the Inverse File for the entry
     // 每一个KeyFrame包含多个words，遍历mvInvertedFile中的这些words，然后在word中删除该KeyFrame
@@ -81,18 +81,7 @@ void KeyFrameDatabase::clear()
     mvInvertedFile.resize(mpVoc->size());// mpVoc：预先训练好的词典
 }
 
-/**
- * @brief 在闭环检测中找到与该关键帧可能闭环的关键帧
- *
- * 1. 找出和当前帧具有公共单词的所有关键帧（不包括与当前帧链接的关键帧）
- * 2. 只和具有共同单词较多的关键帧进行相似度计算
- * 3. 将与关键帧相连（权值最高）的前十个关键帧归为一组，计算累计得分
- * 4. 只返回累计得分较高的组中分数最高的关键帧
- * @param pKF      需要闭环的关键帧
- * @param minScore 相似性分数最低要求
- * @return         可能闭环的关键帧
- * @see III-E Bags of Words Place Recognition
- */
+
 vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float minScore)
 {
     // 提出所有与该pKF相连的KeyFrame，这些相连Keyframe都是局部相连，在闭环检测的时候将被剔除
@@ -103,7 +92,7 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
     // Discard keyframes connected to the query keyframe
     // 步骤1：找出和当前帧具有公共单词的所有关键帧（不包括与当前帧链接的关键帧）
     {
-        unique_lock<mutex> lock(mMutex);
+        QMutexLocker lock(&mMutex);
 
         // words是检测图像是否匹配的枢纽，遍历该pKF的每一个word
         for(DBoW2::BowVector::const_iterator vit=pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit != vend; vit++)
@@ -225,26 +214,15 @@ vector<KeyFrame*> KeyFrameDatabase::DetectLoopCandidates(KeyFrame* pKF, float mi
     return vpLoopCandidates;
 }
 
-/**
- * @brief 在重定位中找到与该帧相似的关键帧
- *
- * 1. 找出和当前帧具有公共单词的所有关键帧
- * 2. 只和具有共同单词较多的关键帧进行相似度计算
- * 3. 将与关键帧相连（权值最高）的前十个关键帧归为一组，计算累计得分
- * 4. 只返回累计得分较高的组中分数最高的关键帧
- * @param F 需要重定位的帧
- * @return  相似的关键帧
- * @see III-E Bags of Words Place Recognition
- */
+
 vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F)
 {
-    // 相对于关键帧的闭环检测DetectLoopCandidates，重定位检测中没法获得相连的关键帧
-    list<KeyFrame*> lKFsSharingWords;// 用于保存可能与F形成回环的候选帧（只要有相同的word，且不属于局部相连帧）
+    list<KeyFrame*> lKFsSharingWords;
 
     // Search all keyframes that share a word with current frame
-    // 步骤1：找出和当前帧具有公共单词的所有关键帧
+
     {
-        unique_lock<mutex> lock(mMutex);
+        QMutexLocker lock(&mMutex);
 
         // words是检测图像是否匹配的枢纽，遍历该pKF的每一个word
         for(DBoW2::BowVector::const_iterator vit=F->mBowVec.begin(), vend=F->mBowVec.end(); vit != vend; vit++)
@@ -359,5 +337,5 @@ vector<KeyFrame*> KeyFrameDatabase::DetectRelocalizationCandidates(Frame *F)
 
     return vpRelocCandidates;
 }
+}
 
-} //namespace ORB_SLAM

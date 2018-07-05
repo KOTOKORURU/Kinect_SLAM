@@ -30,8 +30,7 @@
 #include<stdint.h>
 
 using namespace std;
-
-namespace ORB_SLAM2
+namespace KINECT_SLAM
 {
 
 const int ORBmatcher::TH_HIGH = 100;
@@ -113,9 +112,9 @@ int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoint
                 if(F.mvpMapPoints[idx]->Observations()>0)
                     continue;
 
-            if(F.mvuRight[idx]>0)
+            if(F.mvu[idx]>0)
             {
-                const float er = fabs(pMP->mTrackProjXR-F.mvuRight[idx]);//计算距离
+                const float er = fabs(pMP->mTrackProjXR-F.mvu[idx]);//计算距离
                 if(er>r*F.mvScaleFactors[nPredictedLevel])
                     continue;
             }
@@ -189,19 +188,6 @@ bool ORBmatcher::CheckDistEpipolarLine(const cv::KeyPoint &kp1,const cv::KeyPoin
     return dsqr<3.84*pKF2->mvLevelSigma2[kp2.octave];
 }
 
-/**
- * @brief 通过词包，对关键帧的特征点进行跟踪
- * 
- * 通过bow对pKF和F中的特征点进行快速匹配（不属于同一node的特征点直接跳过匹配） \n
- * 对属于同一node的特征点通过描述子距离进行匹配 \n
- * 根据匹配，用pKF中特征点对应的MapPoint更新F中特征点对应的MapPoints \n
- * 每个特征点都对应一个MapPoint，因此pKF中每个特征点的MapPoint也就是F中对应点的MapPoint \n
- * 通过距离阈值、比例阈值和角度投票进行剔除误匹配
- * @param  pKF               KeyFrame  当前关键帧
- * @param  F                 Current Frame 可以是候选回环帧
- * @param  vpMapPointMatches F中MapPoints对应的匹配，NULL表示未匹配
- * @return                   成功匹配的数量
- */
 int ORBmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPointMatches)
 {
     const vector<MapPoint*> vpMapPointsKF = pKF->GetMapPointMatches();//上一个关键帧的地图点
@@ -339,10 +325,7 @@ int ORBmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoin
             // 将除了ind1 ind2 ind3以外的匹配点去掉
             for(size_t j=0, jend=rotHist[i].size(); j<jend; j++)
             {
-                vpMapPointMatches[rotHist[i][j]]=static_cast<MapPoint*>(NULL); /*for(int i=0;i<matches.size();i++)
-					                                                                if(matches[i].queryIdx == [rotHist[i][j]])
-                                                                                        matches.erase(matches.begin()+i);																						
-																				 */
+                vpMapPointMatches[rotHist[i][j]]=static_cast<MapPoint*>(NULL);
                 nmatches--;
             }
         }
@@ -362,7 +345,7 @@ int ORBmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapP
     const float &cy = pKF->cy;
 
     // Decompose Scw
-    cv::Mat sRcw = .rowRange(0,3).colRange(0,3);
+    cv::Mat sRcw = Scw.rowRange(0,3).colRange(0,3);
     const float scw = sqrt(sRcw.row(0).dot(sRcw.row(0)));// 计算得到尺度s 点乘
     cv::Mat Rcw = sRcw/scw;
     cv::Mat tcw = Scw.rowRange(0,3).col(3)/scw;// pKF坐标系下，世界坐标系到pKF的位移，方向由世界坐标系指向pKF
@@ -816,8 +799,8 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
                 if(pMP1)
                     continue;
 
-                // 如果mvuRight中的值大于0，表示是双目，且该特征点有深度值
-                const bool bStereo1 = pKF1->mvuRight[idx1]>=0;
+                // 如果mvu中的值大于0，表示是双目，且该特征点有深度值
+                const bool bStereo1 = pKF1->mvu[idx1]>=0;
 
                 if(bOnlyStereo)
                     if(!bStereo1)
@@ -847,7 +830,7 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
                     if(vbMatched2[idx2] || pMP2)
                         continue;
 
-                    const bool bStereo2 = pKF2->mvuRight[idx2]>=0;
+                    const bool bStereo2 = pKF2->mvu[idx2]>=0;
 
                     if(bOnlyStereo)
                         if(!bStereo2)
@@ -1048,12 +1031,12 @@ int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const
                 continue;
 
             // 计算MapPoint投影的坐标与这个区域特征点的重投影误差，如果偏差很大，直接跳过特征点匹配
-            if(pKF->mvuRight[idx]>=0)//这是双目的吧，计算重投影误差
+            if(pKF->mvu[idx]>=0)//这是双目的吧，计算重投影误差
             {
                 // Check reprojection error in stereo
                 const float &kpx = kp.pt.x;
                 const float &kpy = kp.pt.y;
-                const float &kpr = pKF->mvuRight[idx];//右边相机的特征点
+                const float &kpr = pKF->mvu[idx];//右边相机的特征点
                 const float ex = u-kpx;
                 const float ey = v-kpy;//就是这个地图点和他附近的特征点的投影误差,也就是距离过大
                 const float er = ur-kpr;//在右边相机的误差
@@ -1589,11 +1572,11 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                         if(CurrentFrame.mvpMapPoints[i2]->Observations()>0)
                             continue;
 
-                    if(CurrentFrame.mvuRight[i2]>0)
+                    if(CurrentFrame.mvu[i2]>0)
                     {
                         // 双目和rgbd的情况，需要保证右图的点也在搜索半径以内
                         const float ur = u - CurrentFrame.mbf*invzc;
-                        const float er = fabs(ur - CurrentFrame.mvuRight[i2]);
+                        const float er = fabs(ur - CurrentFrame.mvu[i2]);
                         if(er>radius)
                             continue;
                     }
@@ -1851,4 +1834,4 @@ int ORBmatcher::DescriptorDistance(const cv::Mat &a, const cv::Mat &b)
     return dist;
 }
 
-} //namespace ORB_SLAM
+}

@@ -1,6 +1,6 @@
 #ifndef _MODEL_H
 #define _MODEL_H
-#include <ros/ros.h>
+#include<ros/ros.h>
 #include <tf/transform_datatypes.h>
 #include <Eigen/Core>
 #include <QString>
@@ -13,8 +13,8 @@
 #include "scoped_timer.h"
 #include "header.h"
 
-#include "g2o/types/slam3d/se3quat.h"
-#include "g2o/types/slam3d/vertex_se3.h"
+#include "../Thirdparty/g2o/g2o/types/se3quat.h"
+//#include "g2o/types/slam3d/vertex_se3.h"
 
 #include <pcl_ros/transforms.h>
 #include "pcl/common/io.h"
@@ -24,7 +24,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-
+#include <geometry_msgs/Point.h>
 #include <omp.h>
 #include "parameter_setting.h"
 
@@ -115,15 +115,8 @@ pointcloud_type* createXYZRGBPointCloud (const cv::Mat& depth_msg, const cv::Mat
 void transformAndAppendPointCloud (const pointcloud_type &cloud_in, pointcloud_type &cloud_to_append_to,
                                    const tf::Transform transformation, float Max_Depth, int idx=0);
 
-geometry_msgs::Point pointInWorldFrame(const Eigen::Vector4f& point3d, const g2o::VertexSE3::EstimateType& transf);
 
-///if motion is too intense translation > 10cm or largest euler-angle>5 deg
-bool isBigTrafo(const Eigen::Isometry3d& t);
-bool isBigTrafo(const g2o::SE3Quat& t);
-/// if motion is too gentle
-bool isSmallTrafo(const g2o::SE3Quat& t, double seconds = 1.0);
-bool isSmallTrafo(const Eigen::Isometry3d& t, double seconds = 1.0);
-void transfSize(const Eigen::Isometry3d& t,double& angle, double& dist);
+
 
 
 ///Model function
@@ -150,5 +143,6 @@ void observationLikelihood(const Eigen::Matrix4f& proposed_transformation,//new 
 bool observation_criterion_met(unsigned int inliers, unsigned int outliers, unsigned int all, double& quality);
 
 void getColor(const point_type& p, unsigned char& r, unsigned char& g, unsigned char& b);
-
+void getDistortions(float& k1, float& k2, float& k3, float& p1, float& p2, const sensor_msgs::CameraInfo& cam_info);
+void getIntrinsics(float& fx, float& fy, float& cx, float& cy, const sensor_msgs::CameraInfo& cam_info);
 #endif

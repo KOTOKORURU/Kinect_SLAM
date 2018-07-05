@@ -20,6 +20,20 @@ g2o::SE3Quat eigen2G2o( const Eigen::Matrix4d& eigen_mat);
 
 g2o::SE3Quat  tf2G2o( const tf::Transform t);
 
+g2o::SE3Quat Mat2G2o(const cv::Mat& t);
+
+cv::Mat G2o2Mat(const g2o::SE3Quat& quat);
+cv::Mat G2o2Mat(const g2o::Sim3& sim);
+Eigen::Matrix<double,3,3> Mat2Eigen(const cv::Mat& cvMat3);
+
+Eigen::Matrix<double,3,1> toVector3d(const cv::Mat& cvVector);
+Eigen::Matrix<double,3,1> toVector3d(const cv::Point3f& cvPoint);
+
+cv::Mat Eigen2Mat(const Eigen<double,4,4>& m);
+cv::Mat Eigen2Mat(const Eigen::Matrix3d& m);
+cv::Mat Eigen2Mat(const Eigen::Matrix<double,3,1>& m);
+cv::Mat Eigen2MatSE3(const Eigen::Matrix<double,3,1>& R, const Eigen::Matrix<double,3,1>& t);
+
 template<typename T>
 QMatrix4x4 eigenOrTF2QMatrix(const T& transf)
 {
@@ -69,6 +83,6 @@ void mat2RPY(const Eigen::Matrix4f& t, double& roll, double& pitch, double& yaw)
 void mat2dist(const Eigen::Matrix4f& t, double &dist);
 
 //bag words
-static std::vector<cv::Mat> toDescriptorVector(const cv::Mat &Descriptors);
+std::vector<cv::Mat> toDescriptorVector(const cv::Mat &Descriptors);
 
 #endif

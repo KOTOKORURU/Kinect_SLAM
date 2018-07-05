@@ -26,9 +26,8 @@
 #include <opencv/cv.h>
 
 
-namespace ORB_SLAM2
+namespace KINECT_SLAM
 {
-
 class ExtractorNode
 {
 public:
@@ -110,7 +109,6 @@ protected:
     std::vector<float> mvInvLevelSigma2;
 };
 
-} //namespace ORB_SLAM
-
+}
 #endif
 

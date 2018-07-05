@@ -29,10 +29,8 @@
 #include "Frame.h"
 #include "ORBVocabulary.h"
 
-#include<mutex>
-
-
-namespace ORB_SLAM2
+#include<QMutex>
+namespace KINECT_SLAM
 {
 
 class KeyFrame;
@@ -66,9 +64,9 @@ protected:
   std::vector<list<KeyFrame*> > mvInvertedFile; ///< 倒排索引，mvInvertedFile[i]表示包含了第i个word id的所有关键帧
 
   // Mutex
-  std::mutex mMutex;
+  QMutex mMutex;
 };
 
-} //namespace ORB_SLAM
 
+}
 #endif

@@ -132,6 +132,11 @@ SET(ADDITIONAL_SOURCES src/kinect_listener.cpp
     src/ORBextractor.cpp
     src/KeyFrameDataBase.cpp
     src/ORBmatcher.cpp
+    src/Sim3Solver.cpp
+    src/Optimizer.cpp
+    src/LoopClosing.cpp
+    src/LocalMapper.cpp
+    src/Tracking.cpp
     )
 
 include_directories(${PROJECT_SOURCE_DIR}/include/

@@ -11,8 +11,7 @@
 
 using namespace cv;
 using namespace std;
-
-namespace ORB_SLAM2
+namespace KINECT_SLAM
 {
 
 const int PATCH_SIZE = 31;
@@ -1092,4 +1091,4 @@ void ORBextractor::ComputePyramid(cv::Mat image)
 
 }
 
-} //namespace ORB_SLAM
+}

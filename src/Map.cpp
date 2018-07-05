@@ -1,5 +1,6 @@
 #include "Map.h"
-
+namespace KINECT_SLAM
+{
 Map::Map():mnMaxKFid(0)
 {
 
@@ -9,10 +10,10 @@ void Map::AddKeyFrame(KeyFrame *pKF){
     QMutexLocker locker(&mMutexMap);
     mspKeyFrames.insert(pKF);
     if(pKF->mnId>mnMaxKFid)
-        mmMaxKFid = pKF->mnId;
+        mnMaxKFid = pKF->mnId;
 }
 
-void Mapp::AddMapPoint(MapPoint *pMP){
+void Map::AddMapPoint(MapPoint *pMP){
     QMutexLocker locker (&mMutexMap);
     mspMapPoints.insert(pMP);
 }
@@ -20,7 +21,7 @@ void Mapp::AddMapPoint(MapPoint *pMP){
 void Map::EraseMapPoint(MapPoint *pMP){
 
     QMutexLocker locker(&mMutexMap);
-    mspMapPoints.erase(pMp);
+    mspMapPoints.erase(pMP);
 }
 
 void Map::EraseKeyFrame(KeyFrame *pKF){
@@ -76,4 +77,5 @@ void Map::clear(){
     mnMaxKFid = 0;
     mvpReferenceMapPoints.clear();
     mvpKeyFrameOrigins.clear();
+}
 }

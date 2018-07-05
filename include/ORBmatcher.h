@@ -31,9 +31,8 @@
 #include"Frame.h"
 
 
-namespace ORB_SLAM2
+namespace KINECT_SLAM
 {
-
 class ORBmatcher
 {    
 public:
@@ -138,8 +137,8 @@ protected:
 
     float mfNNratio;
     bool mbCheckOrientation;
-};
 
-}// namespace ORB_SLAM
+};
+}
 
 #endif // ORBMATCHER_H

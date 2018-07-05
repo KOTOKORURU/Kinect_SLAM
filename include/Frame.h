@@ -12,9 +12,10 @@
 #include <ros/ros.h>
 #include <sensor_msgs/CameraInfo.h>
 #include "parameter_setting.h"
-#define FRAME_GRID_ROWS 64
-#define FRAME_GRID_COLS 48
-
+#define FRAME_GRID_ROWS 48
+#define FRAME_GRID_COLS 64
+namespace KINECT_SLAM
+{
 class MapPoint;
 class KeyFrame;
 
@@ -23,7 +24,7 @@ class Frame{
     Frame();
     //Copy constructor.
     Frame(const Frame &frame);
-    Frame(const cv::Mat &imGray, cv::Mat&imRGB,const cv::Mat &imDepth, ORBextractor* extractor,ORBVocabulary* voc, const float &thDepth,sensor_msgs::CameraInfoConstPtr cam_info);
+    Frame(const cv::Mat &imGray, cv::Mat&imRGB,const cv::Mat &imDepth, ORBextractor* extractor,ORBVocabulary* voc, const float &thDepth,const sensor_msgs::CameraInfoConstPtr cam_info);
     //Extract the keypoints
     void ExtractORB(const cv::Mat &im);
     //convert the keypoints to bagwords vector and features vector
@@ -55,7 +56,7 @@ class Frame{
 public:
     ORBVocabulary* mpORBvocabulary;
     ORBextractor* mpORBextractor;
-    double mTimeStamp;
+    ros::Time mTimeStamp;
     cv::Mat mK;
     static float fx;
     static float fy;
@@ -64,7 +65,7 @@ public:
     static float invfx;
     static float invfy;
     cv::Mat mDistCoef;
-    sensor_msgs::CameraInfoConstPtr cam_info;
+    sensor_msgs::CameraInfo cam_info;
     float mbf;//base_line
     float mb;
 
@@ -75,7 +76,7 @@ public:
     std::vector<cv::KeyPoint> mvKeys;
     std::vector<cv::KeyPoint> mvKeysUn;
     std::vector<float> mvDepth;
-    std::vector<float> mvu;
+    std::vector<float> mvuRight;
 
     //Bag of Words Vector structures.
     DBoW2::BowVector mBowVec;
@@ -88,11 +89,11 @@ public:
     static float mfGridElementWidthInv;
     static float mfGridElementHeightInv;
     //64X48
-    std::vector<std::size_t> mGrid[FRAME_GRID_ROWS][FRAME_GRID_COLS];
+    std::vector<std::size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
     //camera pose
     cv::Mat mTcw;
     static long unsigned int nNextId;
-    static long unsigned int mnId;//id
+    long unsigned int mnId;//id
 
     KeyFrame* mpReferenceKF;//Point to the kf constructed by this frame
 
@@ -126,5 +127,6 @@ private:
     cv::Mat mOw;
 
 };
+}
 
 #endif

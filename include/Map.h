@@ -8,7 +8,8 @@
 #include <QMutex>
 class MapPoint;
 class KeyFrame;
-
+namespace KINECT_SLAM
+{
 class Map{
   public:
     Map();
@@ -31,8 +32,6 @@ class Map{
     vector<KeyFrame*> mvpKeyFrameOrigins;//best keyframes
     long unsigned int GetMaxKFid();//last keyframe id
 
-    void clear();
-
     QMutex mQMutexMapUpdate;
     QMutex mMutexPointCreation;
 
@@ -48,5 +47,5 @@ protected:
 
 
 };
-
+}
 #endif

@@ -1,6 +1,6 @@
 #ifndef KEYFRAME_H
 #define KEYFRAME_H
-
+#include "parameter_setting.h"
 #include "MapPoint.h"
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
@@ -8,13 +8,21 @@
 #include "ORBextractor.h"
 #include "Frame.h"
 #include "KeyFrameDataBase.h"
-#include<QMutex>
+#include <QMutex>
+#include <ros/ros.h>
+#include <sensor_msgs/CameraInfo.h>
+namespace KINECT_SLAM
+{
+class Map;
+class MapPoint;
+class Frame;
+class KeyFrameDatabase;
 
 class KeyFrame {
 public:
-    KeyFrame(Frame& F,Map* pMap, KeyFrameDatebase* pKFDB);
+    KeyFrame(Frame& F,Map* pMap, KeyFrameDatabase* pKFDB);
 
-    void setPose(const cv::Mat& Tcw);
+    void SetPose(const cv::Mat& Tcw);
     cv::Mat GetPose();
     cv::Mat GetPoseInverse();
     cv::Mat GetCameraCenter();
@@ -50,7 +58,7 @@ public:
     void AddMapPoint(MapPoint* pMP,const size_t& idx);
     void EraseMapPointMatch(const size_t& idx);
     void EraseMapPointMatch(MapPoint* pMP);
-    void ReplaceMapPointMatch(const size_t& idx,MapPoint& pMP);
+    void ReplaceMapPointMatch(const size_t& idx,MapPoint* pMP);
     std::set<MapPoint*> GetMapPoints();
     std::vector<MapPoint*> GetMapPointMatches();
     int TrackedMapPoints(const int& minObs);
@@ -70,7 +78,7 @@ public:
     //check/set bad flag
     void SetBadFlag();
     bool isBad();
-    //float ComputeSceneMedianDepth(const int q);
+    //GetCovisibilesByWeightfloat ComputeSceneMedianDepth(const int q);
     static bool weightComp(int a, int b)
     {
         return a>b;
@@ -86,7 +94,7 @@ public:
     long unsigned int mnId;
     const long unsigned int mnFrameId;
 
-    const double mTimeStamp;
+    const ros::Time mTimeStamp;
     //Grid
     const int mnGridCols;
     const int mnGridRows;
@@ -115,18 +123,18 @@ public:
     long unsigned int mnBAGlobalForKF;
 
     //Calibration parameters
-    const float fx,fy,cy,cy,invfx,invfy,mbf,mb,mThDepth;
+    const float fx,fy,cx,cy,invfx,invfy,mbf,mb,mThDepth;
 
     const int N;
     const std::vector<cv::KeyPoint> mvKeys;
     const std::vector<cv::KeyPoint> mvKeysUn;
-    const std::vector<float> mvu;
+    const std::vector<float> mvuRight;
     const std::vector<float> mvDepth;
     const cv::Mat mDescriptors;
 
     //BoW
-    DBow2::BowVector mBowVec;
-    DBow2::FeatureVector mFeatVec;
+    DBoW2::BowVector mBowVec;
+    DBoW2::FeatureVector mFeatVec;
 
     //// Pose relative to parent (this is computed when bad flag is activated)
     cv::Mat mTcp;
@@ -145,14 +153,13 @@ public:
     const int mnMinY;
     const int mnMaxY;
     const cv::Mat mK;
-    sensor_msgs::CameraInfoConstPtr cam_info;
+    sensor_msgs::CameraInfo cam_info;
     pointcloud_type::Ptr pc_col;
-
-
 protected:
     cv::Mat Tcw;
     cv::Mat Twc;
     cv::Mat Ow;
+    //cv::Mat Cw;
 
     std::vector<MapPoint*> mvpMapPoints;
 
@@ -161,7 +168,7 @@ protected:
     ORBVocabulary* mpORBvocabulary;
 
     //grid image
-    std:vector< std::vector<std::vector<size_t> > > mGrid;
+    std::vector< std::vector<std::vector<size_t> > > mGrid;
 
     //Covisibility Graph
     std::map<KeyFrame*,int> mConnectedKeyFrameWeights;
@@ -188,4 +195,5 @@ protected:
     QMutex mMutexFeatures;
 
 };
+}
 #endif
